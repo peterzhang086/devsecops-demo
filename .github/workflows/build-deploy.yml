@@ -9,6 +9,7 @@ on:
       - '.github/workflows/**'
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 # OIDC requires id-token: write
 permissions:
