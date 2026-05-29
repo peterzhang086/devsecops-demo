@@ -1,0 +1,120 @@
+name: build-and-deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main]
+
+# OIDC requires id-token: write
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: demo-dev/crypto-asset-api
+  EKS_CLUSTER: demo-dev
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: app/go.sum
+
+      - name: Vet
+        working-directory: ./app
+        run: go vet ./...
+
+      - name: Test
+        working-directory: ./app
+        run: go test ./... -race -count=1
+
+  build-and-push:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Compute image tag
+        id: meta
+        run: |
+          TAG="$(date +%Y%m%d)-${GITHUB_SHA::7}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.tag }}
+          # Reproducible builds
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - name: Set up Kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Login to ECR (for digest resolution)
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Pin image and apply
+        working-directory: k8s/overlays/dev
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPO: ${{ env.ECR_REPOSITORY }}
+          TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        run: |
+          kustomize edit set image REPLACE_IN_OVERLAY=$REGISTRY/$REPO:$TAG
+          kustomize build . | kubectl apply -f -
+          kubectl -n crypto-api rollout status deployment/crypto-asset-api --timeout=3m

@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: crypto-api
+
+resources:
+- ../../base
+
+# CI pipeline runs `kustomize edit set image` to pin the digest before apply.
+images:
+- name: REPLACE_IN_OVERLAY
+  newName: 752192503718.dkr.ecr.us-east-2.amazonaws.com/demo-dev/crypto-asset-api
+  newTag: latest
