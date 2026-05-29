@@ -4,6 +4,7 @@ variable "repository_name" { type = string }
 resource "aws_ecr_repository" "this" {
   name                 = "${var.name_prefix}/${var.repository_name}"
   image_tag_mutability = "IMMUTABLE"  # signed tags only — important talking point
+  force_delete         = true         # allows destroy even when images exist
 
   image_scanning_configuration {
     scan_on_push = true  # ECR-native scanning (will add Trivy as second opinion)

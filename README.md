@@ -4,8 +4,7 @@ End-to-end security engineering demo for a simulated crypto-asset management API
 showcasing DevSecOps tooling, AWS cloud security, Kubernetes runtime security,
 and continuous compliance.
 
-> Built as a portfolio piece for cloud security / DevSecOps engineering roles
-> in Web3 / DEX context.
+> Built as a portfolio piece for cloud security / DevSecOps engineering roles.
 
 ## Architecture (Week 1 Baseline)
 
