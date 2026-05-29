@@ -58,3 +58,22 @@ output "github_actions_role_arn" {
 output "kubeconfig_command" {
   value = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.region}"
 }
+
+resource "aws_eks_access_entry" "github_actions" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn = module.github_oidc.role_arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "github_actions_deploy" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn = module.github_oidc.role_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+
+  access_scope {
+    type       = "namespace"
+    namespaces = ["crypto-api"]
+  }
+
+  depends_on = [aws_eks_access_entry.github_actions]
+}
