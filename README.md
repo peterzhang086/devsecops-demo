@@ -6,28 +6,61 @@ and continuous compliance.
 
 > Built as a portfolio piece for cloud security / DevSecOps engineering roles.
 
-## Architecture (Week 1 Baseline)
+## Architecture
 
 ```
 ┌─────────────────┐
 │  GitHub Actions │  ──OIDC──▶  AWS IAM Role  (no long-lived keys)
 └────────┬────────┘
-         │ push image
+         │
+         ├─ test          (go vet + go test -race)
+         ├─ scan-code     (gosec SAST + govulncheck SCA)
+         ├─ scan-iac      (checkov Terraform)
+         │
          ▼
-   ┌──────────┐         ┌──────────────────────────────┐
-   │   ECR    │────────▶│        EKS Cluster           │
-   └──────────┘         │  ┌────────────────────────┐  │
-                        │  │  crypto-asset-api      │  │
-                        │  │  (Go service)          │  │
-                        │  └───────────┬────────────┘  │
-                        └──────────────┼───────────────┘
-                                       │
-                              ┌────────▼────────┐
-                              │       ALB       │
-                              └────────┬────────┘
-                                       │
-                                  Internet
+    build-and-push  (ECR — immutable tags, KMS encrypted)
+         │
+         ▼
+     scan-image     (Trivy — CRITICAL/HIGH gate)
+         │
+         ▼
+       deploy       (Kyverno admission control + Falco runtime detection)
+         │
+         ▼
+        dast        (nuclei HTTP security scan)
+
+Weekly: security-audit (Prowler CSPM — CIS AWS Benchmark)
 ```
+
+```
+   ┌──────────┐         ┌─────────────────────────────────────┐
+   │   ECR    │────────▶│           EKS Cluster               │
+   └──────────┘         │  ┌─────────────────────────────┐    │
+                        │  │  crypto-asset-api (x2)      │    │
+                        │  │  distroless · nonroot · RO  │    │
+                        │  └──────────────┬──────────────┘    │
+                        │                 │                    │
+                        │  Kyverno  ·  Falco  ·  PSS          │
+                        └─────────────────┼────────────────────┘
+                                          │
+                                 ┌────────▼────────┐
+                                 │       ALB       │
+                                 └─────────────────┘
+```
+
+## Security Controls
+
+| Layer | Control | Tool |
+|-------|---------|------|
+| Source code | SAST | gosec |
+| Dependencies | SCA | govulncheck |
+| Infrastructure | IaC scanning | checkov |
+| Container image | CVE scanning | Trivy |
+| Kubernetes | Admission control | Kyverno |
+| Runtime | Threat detection | Falco |
+| Cloud posture | CSPM | Prowler |
+| API | DAST | nuclei |
+| Credentials | OIDC federation | GitHub Actions + AWS |
 
 ## Quick Start
 
@@ -58,7 +91,7 @@ kubectl apply -k k8s/overlays/dev
 
 ## Status
 
-- [x] Week 1: Infra + app + minimal CI/CD
-- [ ] Week 2: Full security scanning pipeline (SAST/SCA/DAST/IaC)
-- [ ] Week 3: Runtime security (Falco/Kyverno) + CSPM (Prowler)
-- [ ] Week 4: Pentest report + custom tools
+- [x] Week 1: Infra + app + CI/CD (EKS, ECR, OIDC, Go service)
+- [x] Week 2: Security scanning pipeline (gosec, govulncheck, Trivy, checkov)
+- [x] Week 3: Runtime security (Falco, Kyverno) + CSPM (Prowler)
+- [x] Week 4: Pentest report + DAST (nuclei)
