@@ -18,6 +18,10 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		h.Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
 		h.Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+		h.Set("Cross-Origin-Embedder-Policy", "require-corp")
+		h.Set("Cross-Origin-Opener-Policy", "same-origin")
+		h.Set("Cross-Origin-Resource-Policy", "same-origin")
+		h.Set("X-Permitted-Cross-Domain-Policies", "none")
 		// Don't leak server info
 		h.Set("Server", "")
 		next.ServeHTTP(w, r)
