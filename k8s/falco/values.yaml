@@ -9,10 +9,6 @@ falco:
   priority: notice
   stdout_output:
     enabled: true
-  grpc:
-    enabled: false
-  grpcOutput:
-    enabled: false
 
   customRules:
     crypto-api-rules.yaml: |-
