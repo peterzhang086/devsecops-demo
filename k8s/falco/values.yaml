@@ -1,6 +1,25 @@
 driver:
   kind: modern_ebpf  # no kernel module needed; works on EKS AL2023 (kernel 6.x)
 
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+
+falcoctl:
+  artifact:
+    follow:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+
 falco:
   json_output: true
   json_include_output_property: true
