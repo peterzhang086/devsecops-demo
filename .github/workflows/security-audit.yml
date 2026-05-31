@@ -38,7 +38,7 @@ jobs:
           prowler aws \
             --output-formats html \
             --output-directory prowler-output \
-            --severity critical high \
+            --severity critical high medium \
             --service iam s3 ec2 eks ecr cloudtrail cloudwatch kms \
             --no-banner
         continue-on-error: true
