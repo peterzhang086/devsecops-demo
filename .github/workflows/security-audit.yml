@@ -1,0 +1,51 @@
+name: security-audit
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly Monday 6am UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/security-audit.yml'
+
+permissions:
+  id-token: write
+  contents: read
+  security-events: write
+
+env:
+  AWS_REGION: us-east-2
+
+jobs:
+  prowler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Prowler
+        run: pip install prowler
+
+      - name: Run Prowler CSPM scan
+        run: |
+          prowler aws \
+            --output-formats sarif \
+            --output-directory prowler-output \
+            --severity critical high \
+            --services iam s3 ec2 eks ecr cloudtrail cloudwatch kms \
+            --no-banner
+        continue-on-error: true
+
+      - name: Upload Prowler SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: prowler-output/
+          category: prowler

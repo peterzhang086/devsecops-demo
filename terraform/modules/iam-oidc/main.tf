@@ -90,5 +90,10 @@ resource "aws_iam_role_policy" "ci" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "security_audit" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = "arn:aws:iam::aws:policy/SecurityAudit"
+}
+
 output "role_arn"          { value = aws_iam_role.github_actions.arn }
 output "oidc_provider_arn" { value = aws_iam_openid_connect_provider.github.arn }
