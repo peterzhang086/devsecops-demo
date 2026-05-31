@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-image-registries
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-ecr-registry
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [crypto-api]
+      validate:
+        message: "Images in crypto-api namespace must be from the approved ECR registry (752192503718.dkr.ecr.us-east-2.amazonaws.com)."
+        pattern:
+          spec:
+            containers:
+              - image: "752192503718.dkr.ecr.us-east-2.amazonaws.com/*"

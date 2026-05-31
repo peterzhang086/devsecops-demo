@@ -186,6 +186,19 @@ jobs:
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2
 
+      - name: Install Kyverno
+        run: |
+          helm repo add kyverno https://kyverno.github.io/kyverno/
+          helm repo update
+          helm upgrade --install kyverno kyverno/kyverno \
+            --namespace kyverno \
+            --create-namespace \
+            --wait \
+            --timeout 5m
+
+      - name: Apply Kyverno policies
+        run: kubectl apply -f k8s/policies/
+
       - name: Login to ECR (for digest resolution)
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
