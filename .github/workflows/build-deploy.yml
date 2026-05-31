@@ -199,6 +199,17 @@ jobs:
       - name: Apply Kyverno policies
         run: kubectl apply -f k8s/policies/
 
+      - name: Install Falco
+        run: |
+          helm repo add falcosecurity https://falcosecurity.github.io/charts
+          helm repo update
+          helm upgrade --install falco falcosecurity/falco \
+            --namespace falco \
+            --create-namespace \
+            --values k8s/falco/values.yaml \
+            --wait \
+            --timeout 5m
+
       - name: Login to ECR (for digest resolution)
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
