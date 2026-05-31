@@ -68,11 +68,10 @@ resource "aws_eks_access_entry" "github_actions" {
 resource "aws_eks_access_policy_association" "github_actions_deploy" {
   cluster_name  = module.eks.cluster_name
   principal_arn = module.github_oidc.role_arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
 
   access_scope {
-    type       = "namespace"
-    namespaces = ["crypto-api"]
+    type = "cluster"
   }
 
   depends_on = [aws_eks_access_entry.github_actions]
