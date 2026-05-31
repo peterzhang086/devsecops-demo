@@ -249,7 +249,10 @@ jobs:
       - name: Install nuclei
         run: |
           go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-          nuclei -update-templates -silent
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+
+      - name: Update nuclei templates
+        run: nuclei -update-templates -silent
 
       - name: Run nuclei DAST scan
         run: |
