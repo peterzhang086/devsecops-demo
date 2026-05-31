@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # ── Stage 1: build ────────────────────────────────────────────────────────────
-FROM golang:1.22-alpine AS build
+FROM golang:1.25-alpine AS build
 
 # Pin via digest in week 2; for now pin by tag
 WORKDIR /src
