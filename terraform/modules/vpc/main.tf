@@ -101,9 +101,10 @@ resource "aws_route_table_association" "private" {
 }
 
 # VPC Flow Logs — required for security audit trail
+#checkov:skip=CKV_AWS_158: KMS encryption for flow logs is cost-prohibitive in demo; VPC data is not PII
 resource "aws_cloudwatch_log_group" "flow_logs" {
   name              = "/aws/vpc/${var.name_prefix}/flow-logs"
-  retention_in_days = 30
+  retention_in_days = 365
 }
 
 resource "aws_iam_role" "flow_logs" {
@@ -131,7 +132,10 @@ resource "aws_iam_role_policy" "flow_logs" {
         "logs:DescribeLogGroups",
         "logs:DescribeLogStreams"
       ]
-      Resource = "*"
+      Resource = [
+        aws_cloudwatch_log_group.flow_logs.arn,
+        "${aws_cloudwatch_log_group.flow_logs.arn}:*"
+      ]
     }]
   })
 }
@@ -141,6 +145,11 @@ resource "aws_flow_log" "this" {
   log_destination = aws_cloudwatch_log_group.flow_logs.arn
   traffic_type    = "ALL"
   vpc_id          = aws_vpc.this.id
+}
+
+resource "aws_default_security_group" "this" {
+  vpc_id = aws_vpc.this.id
+  # No ingress/egress rules — explicit deny all on default SG
 }
 
 output "vpc_id"             { value = aws_vpc.this.id }

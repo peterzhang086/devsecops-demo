@@ -30,6 +30,11 @@ resource "random_id" "suffix" {
 }
 
 # State bucket — encrypted, versioned, public access blocked, object lock-ready
+#checkov:skip=CKV_AWS_144: Cross-region replication not required for demo state backend
+#checkov:skip=CKV_AWS_138: Lifecycle policy not needed for Terraform state bucket
+#checkov:skip=CKV_AWS_145: AES256 encryption is sufficient for demo; KMS adds cost
+#checkov:skip=CKV2_AWS_62: Event notifications not required for demo state bucket
+#checkov:skip=CKV_AWS_18: Access logging not required for demo state bucket
 resource "aws_s3_bucket" "tfstate" {
   bucket = "${var.project}-tfstate-${random_id.suffix.hex}"
 
@@ -61,6 +66,8 @@ resource "aws_s3_bucket_public_access_block" "tfstate" {
 }
 
 # State lock table
+#checkov:skip=CKV_AWS_119: CMK not required for demo lock table; AWS-managed key is sufficient
+#checkov:skip=CKV_AWS_28: PITR not needed for Terraform state lock table
 resource "aws_dynamodb_table" "tflock" {
   name         = "${var.project}-tflock"
   billing_mode = "PAY_PER_REQUEST"
