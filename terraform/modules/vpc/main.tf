@@ -101,8 +101,8 @@ resource "aws_route_table_association" "private" {
 }
 
 # VPC Flow Logs — required for security audit trail
-#checkov:skip=CKV_AWS_158: KMS encryption for flow logs is cost-prohibitive in demo; VPC data is not PII
 resource "aws_cloudwatch_log_group" "flow_logs" {
+  #checkov:skip=CKV_AWS_158: KMS encryption for flow logs is cost-prohibitive in demo; VPC data is not PII
   name              = "/aws/vpc/${var.name_prefix}/flow-logs"
   retention_in_days = 365
 }

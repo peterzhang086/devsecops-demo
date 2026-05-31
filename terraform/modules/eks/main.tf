@@ -6,8 +6,8 @@ variable "public_subnet_ids"  { type = list(string) }
 variable "node_instance_type" { type = string }
 variable "node_desired_size"  { type = number }
 
-#checkov:skip=CKV_TF_1: Pinning to commit hash is a Week 2 supply-chain hardening item; version constraint used for now
 module "eks" {
+  #checkov:skip=CKV_TF_1: Pinning to commit hash is a Week 2 supply-chain hardening item; version constraint used for now
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
