@@ -36,16 +36,17 @@ jobs:
       - name: Run Prowler CSPM scan
         run: |
           prowler aws \
-            --output-formats sarif \
+            --output-formats html json \
             --output-directory prowler-output \
             --severity critical high \
             --services iam s3 ec2 eks ecr cloudtrail cloudwatch kms \
             --no-banner
         continue-on-error: true
 
-      - name: Upload Prowler SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Prowler report as artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: prowler-output/
-          category: prowler
+          name: prowler-report
+          path: prowler-output/
+          retention-days: 30
