@@ -29,8 +29,8 @@ falco:
   stdout_output:
     enabled: true
 
-  customRules:
-    crypto-api-rules.yaml: |-
+customRules:
+  crypto-api-rules.yaml: |-
       # Detect shell execution inside crypto-api pods
       # Demo: run `kubectl exec -it <pod> -n crypto-api -- sh` to trigger
       - rule: Crypto API Shell Spawned
