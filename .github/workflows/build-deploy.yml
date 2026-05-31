@@ -224,3 +224,46 @@ jobs:
           kustomize edit set image REPLACE_IN_OVERLAY=$REGISTRY/$REPO:$TAG
           kustomize build . | kubectl apply -f -
           kubectl -n crypto-api rollout status deployment/crypto-asset-api --timeout=3m
+
+  dast:
+    needs: deploy
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - name: Port-forward API for DAST
+        run: |
+          kubectl port-forward -n crypto-api svc/crypto-asset-api 8080:80 &
+          sleep 10
+
+      - name: Install nuclei
+        run: |
+          go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+          nuclei -update-templates -silent
+
+      - name: Run nuclei DAST scan
+        run: |
+          nuclei -u http://localhost:8080 \
+            -tags http,ssl,misconfiguration,headers \
+            -severity info,low,medium,high,critical \
+            -sarif-export nuclei.sarif \
+            -no-color \
+            -silent
+        continue-on-error: true
+
+      - name: Upload nuclei SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: nuclei.sarif
+          category: nuclei-dast
