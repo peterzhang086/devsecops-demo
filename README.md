@@ -97,3 +97,4 @@ kubectl apply -k k8s/overlays/dev
 - [x] Week 2: Security scanning pipeline (gosec, govulncheck, Trivy, checkov)
 - [x] Week 3: Runtime security (Falco, Kyverno) + CSPM (Prowler)
 - [x] Week 4: Pentest report + DAST (nuclei)
+- [x] Week 5: JWT authentication (HS256, K8s Secret, /auth/token endpoint)

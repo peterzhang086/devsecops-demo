@@ -33,6 +33,11 @@ spec:
           env:
             - name: PORT
               value: "8080"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_SECRET
           resources:
             requests:
               cpu: 50m

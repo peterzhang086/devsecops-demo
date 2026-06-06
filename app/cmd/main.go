@@ -25,6 +25,7 @@ func main() {
 		Logger()
 
 	port := getEnv("PORT", "8080")
+	jwtSecret := mustEnv("JWT_SECRET")
 
 	r := chi.NewRouter()
 
@@ -36,12 +37,16 @@ func main() {
 	r.Use(middleware.SecurityHeaders)
 	r.Use(chimw.Timeout(15 * time.Second))
 
-	// Health endpoints — separate paths for k8s liveness vs readiness
+	// Health endpoints — unauthenticated; required for k8s liveness/readiness probes
 	r.Get("/healthz", handlers.Healthz)
 	r.Get("/readyz", handlers.Readyz)
 
-	// Business API — intentionally simple; rich threat modeling targets
+	// Auth endpoint — issues HS256 JWTs; unauthenticated by design
+	r.Post("/auth/token", handlers.IssueToken([]byte(jwtSecret)))
+
+	// Business API — JWT-protected
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(middleware.JWTAuth([]byte(jwtSecret)))
 		r.Get("/wallets/{address}/balance", handlers.GetBalance)
 		r.Post("/transactions/sign", handlers.SignTransaction)
 		r.Get("/markets/{pair}", handlers.GetMarket)
@@ -79,4 +84,12 @@ func getEnv(k, def string) string {
 		return v
 	}
 	return def
+}
+
+func mustEnv(k string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
+	log.Fatal().Str("var", k).Msg("required environment variable not set")
+	return ""
 }

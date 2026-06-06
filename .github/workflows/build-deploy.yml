@@ -260,6 +260,15 @@ jobs:
             --wait \
             --timeout 5m
 
+      - name: Create JWT secret
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          kubectl create secret generic jwt-secret \
+            --from-literal=JWT_SECRET="$JWT_SECRET" \
+            --namespace crypto-api \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Login to ECR (for digest resolution)
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
