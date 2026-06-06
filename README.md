@@ -62,6 +62,7 @@ Weekly: security-audit (Prowler CSPM — CIS AWS Benchmark)
 | Runtime | Threat detection | Falco |
 | Cloud posture | CSPM | Prowler |
 | API | DAST | nuclei |
+| API | Authentication | JWT (HS256, K8s Secret) |
 | Credentials | OIDC federation | GitHub Actions + AWS |
 
 ## Quick Start
@@ -79,7 +80,12 @@ cd ../envs/dev && terraform init && terraform apply
 # 4. Configure kubectl
 aws eks update-kubeconfig --name demo-dev --region us-east-2
 
-# 5. Deploy app (manual first time; CI takes over after)
+# 5. Create JWT secret (required before first deploy)
+kubectl create secret generic jwt-secret \
+  --from-literal=JWT_SECRET=$(openssl rand -base64 32) \
+  --namespace crypto-api
+
+# 6. Deploy app (manual first time; CI takes over after)
 kubectl apply -k k8s/overlays/dev
 ```
 
@@ -94,7 +100,7 @@ kubectl apply -k k8s/overlays/dev
 ## Status
 
 - [x] Week 1: Infra + app + CI/CD (EKS, ECR, OIDC, Go service)
-- [x] Week 2: Security scanning pipeline (gosec, govulncheck, Trivy, checkov)
+- [x] Week 2: Security scanning pipeline (gosec, Semgrep, govulncheck, Trivy, checkov)
 - [x] Week 3: Runtime security (Falco, Kyverno) + CSPM (Prowler)
 - [x] Week 4: Pentest report + DAST (nuclei)
 - [x] Week 5: JWT authentication (HS256, K8s Secret, /auth/token endpoint)
