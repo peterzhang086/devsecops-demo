@@ -52,7 +52,7 @@ Weekly: security-audit (Prowler CSPM — CIS AWS Benchmark)
 
 | Layer | Control | Tool |
 |-------|---------|------|
-| Source code | SAST | gosec |
+| Source code | SAST | gosec + Semgrep |
 | Dependencies | SCA | govulncheck |
 | Infrastructure | IaC scanning | checkov |
 | Container image | CVE scanning | Trivy |
