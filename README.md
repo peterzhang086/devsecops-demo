@@ -14,8 +14,9 @@ and continuous compliance.
 └────────┬────────┘
          │
          ├─ test          (go vet + go test -race)
-         ├─ scan-code     (gosec SAST + govulncheck SCA)
+         ├─ scan-code     (gosec + Semgrep SAST + govulncheck SCA)
          ├─ scan-iac      (checkov Terraform)
+         ├─ scan-secrets  (Gitleaks — full git history)
          │
          ▼
     build-and-push  (ECR — immutable tags, KMS encrypted)
@@ -53,6 +54,7 @@ Weekly: security-audit (Prowler CSPM — CIS AWS Benchmark)
 | Layer | Control | Tool |
 |-------|---------|------|
 | Source code | SAST | gosec + Semgrep |
+| Secrets | Secret detection | Gitleaks |
 | Dependencies | SCA | govulncheck |
 | Infrastructure | IaC scanning | checkov |
 | Container image | CVE scanning | Trivy |
